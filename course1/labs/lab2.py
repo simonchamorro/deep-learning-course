@@ -36,43 +36,48 @@ def test_grad(input_shape, forward, backward, X=None, output_grad=None):
 
 # ------------------------------ Layer functions ------------------------------
 def fully_connected_forward(W, b, X):
-    # <Your code here>
-    raise NotImplementedError()
+    return np.matmul(X, W) + b
 
 
 def fully_connected_backward(W, b, X, output_grad):
-    # <Your code here>
-    raise NotImplementedError()
+    dx = np.matmul(output_grad, np.transpose(W))
+    dw = np.matmul(np.transpose(X), output_grad)
+    db = np.sum(output_grad, axis=0)
+    return dx, dw, db
 
 
 def relu_forward(X):
-    # <Your code here>
-    raise NotImplementedError()
+    x_out = X.copy()
+    x_out[x_out < 0] = 0
+    return x_out 
 
 
 def relu_backward(X, output_grad):
-    # <Your code here>
-    raise NotImplementedError()
+    grad = output_grad.copy()
+    grad[X < 0] = 0
+    return grad 
 
 
 def sigmoid_forward(X):
-    # <Your code here>
-    raise NotImplementedError()
+    x_out = 1/(1 + np.exp(-X))
+    return x_out
 
 
 def sigmoid_backward(X, output_grad):
-    # <Your code here>
-    raise NotImplementedError()
+    y = sigmoid_forward(X)
+    dydx = (1 - y)*y
+    grad = output_grad*dydx
+    return grad
 
 
 def bce_forward(x, target):
-    # <Your code here>
-    raise NotImplementedError()
+    loss = -target*np.log(x) - (1 - target)*np.log(1 - x)
+    return loss.mean()
 
 
 def bce_backward(x, target):
-    # <Your code here>
-    raise NotImplementedError()
+    grad = -(target/x) + (1 - target)/(1 - x)
+    return grad/2
 
 
 # ------------------------------ Test functions ------------------------------
@@ -227,14 +232,34 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         print('epoch={}'.format(epoch + 1))
         
         # Training: Forward pass
-        # <Your code here>
-        
+        # import pdb; pdb.set_trace()
+
+        x1 = fully_connected_forward(W1, b1, x_train)
+        x2 = relu_forward(x1)
+        x3 = fully_connected_forward(W2, b2, x2)
+        x4 = relu_forward(x3)
+        x5 = fully_connected_forward(W3, b3, x4)
+        y = sigmoid_forward(x5)
+        loss = bce_forward(y, target_train)
+
         # Training: Backward pass
-        # <Your code here>
+        grad = bce_backward(y, target_train)
+        grad = sigmoid_backward(x5, grad)
+        dx3, dw3, db3 = fully_connected_backward(W3, b3, x4, grad)
+        grad = relu_backward(x3, dx3)
+        dx2, dw2, db2 = fully_connected_backward(W2, b2, x2, grad)
+        grad = relu_backward(x1, dx2)
+        dx1, dw1, db1 = fully_connected_backward(W1, b1, x_train, grad)
         
         # Training: Descent gradient
-        # <Your code here>   
-        
+        W1 -= dw1*learning_rate
+        W2 -= dw2*learning_rate
+        W3 -= dw3*learning_rate
+
+        b1 -= db1*learning_rate
+        b2 -= db2*learning_rate
+        b3 -= db3*learning_rate
+
         # Training: Metrics
         losses_train.append(loss)        
         predicted_classes = (y > 0.5).astype(int)
@@ -247,7 +272,13 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         if x_val is not None and target_val is not None:
 
             # Validation: Forward pass
-            # <Your code here>
+            x = fully_connected_forward(W1, b1, x_val)
+            x = relu_forward(x)
+            x = fully_connected_forward(W2, b2, x)
+            x = relu_forward(x)
+            x = fully_connected_forward(W3, b3, x)
+            y = sigmoid_forward(x)
+            loss = bce_forward(y, target_val)
 
             # Validation: Metrics
             losses_val.append(loss)        
@@ -297,7 +328,12 @@ def show_decision_boundary(W1, b1, W2, b2, W3, b3):
     
     data = np.array(np.meshgrid(x1, x2)).T.reshape(-1,2)
     
-    # <Your code here, same as forward pass in train>
+    x = fully_connected_forward(W1, b1, data)
+    x = relu_forward(x)
+    x = fully_connected_forward(W2, b2, x)
+    x = relu_forward(x)
+    x = fully_connected_forward(W3, b3, x)
+    y = sigmoid_forward(x)
     
     fig = plt.figure(figsize=(5, 5), dpi=200)
     ax = fig.add_subplot(111)
@@ -307,7 +343,12 @@ def show_decision_boundary(W1, b1, W2, b2, W3, b3):
 
 def show_classification(W1, b1, W2, b2, W3, b3, X, title=''):
 
-    # <Your code here, same as forward pass in train> 
+    x = fully_connected_forward(W1, b1, X)
+    x = relu_forward(x)
+    x = fully_connected_forward(W2, b2, x)
+    x = relu_forward(x)
+    x = fully_connected_forward(W3, b3, x)
+    y = sigmoid_forward(x)
     
     predicted_classes = (y > 0.5).astype(int)
 
@@ -335,4 +376,4 @@ elif mode == 'training':
     target_train = np.expand_dims(np.genfromtxt('train.csv', delimiter=',')[:,2], axis=1)
     x_val = np.genfromtxt('val.csv', delimiter=',')[:,slice(0,2)]
     target_val = np.expand_dims(np.genfromtxt('val.csv', delimiter=',')[:,2], axis=1)
-    train(x_train, target_train, x_val, target_val, epoch_count=20000, learning_rate=0.04)
+    train(x_train, target_train, x_val, target_val, epoch_count=2500, learning_rate=0.0004)
