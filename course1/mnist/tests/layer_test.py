@@ -1,6 +1,11 @@
 import unittest
 
+import os
+import sys
 import numpy as np
+conf_path = os.getcwd()
+sys.path.append(conf_path)
+sys.path.append(conf_path + '/dnn_framework')
 
 from dnn_framework import FullyConnectedLayer, BatchNormalization, Sigmoid, ReLU
 from tests import test_layer_input_grad, test_layer_parameter_grad
