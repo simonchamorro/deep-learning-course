@@ -14,14 +14,23 @@ class CrossEntropyLoss(Loss):
         :param target: The target classes (shape: (N,))
         :return A tuple containing the loss and the gradient with respect to the input (loss, input_grad)
         """
+
+        # pred = softmax(x)
+        # y = np.zeros_like(x)
+        # for i in range(len(target)):
+        #     y[i][target[i]] = 1
+        # loss = - np.sum(y * np.log(pred))
+
+        # Loss
         m = target.shape[0]
-        pred = softmax(x)
-        log_likelihood = -np.log(pred[range(m), target])
+        p = softmax(x)
+        log_likelihood = -np.log(p[range(m), target])
         loss = np.sum(log_likelihood) / m
 
+        # Gradient
         grad = softmax(x)
         grad[range(m), target] -= 1
-        grad = grad/m
+        grad = grad / m
 
         return (loss, grad)
 
@@ -31,8 +40,11 @@ def softmax(x):
     :param x: The input tensor (shape: (N, C))
     :return The softmax of x
     """
-    exps = np.exp(x - np.max(x))
-    return exps / np.sum(exps)
+    y = np.zeros_like(x)
+    for i in range(x.shape[0]):
+        exps = np.exp(x[i] - np.max(x[i]))
+        y[i] = exps / np.sum(exps)
+    return y
 
 
 class MeanSquaredErrorLoss(Loss):
