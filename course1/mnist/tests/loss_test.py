@@ -1,9 +1,14 @@
 import unittest
 
+import os
+import sys
 import numpy as np
+conf_path = os.getcwd()
+sys.path.append(conf_path)
+sys.path.append(conf_path + '/dnn_framework')
 
 from dnn_framework import CrossEntropyLoss, MeanSquaredErrorLoss
-from tests import test_loss_input_grad
+from tests import test_loss_input_grad, DELTA
 
 
 class LossTestCase(unittest.TestCase):
@@ -13,7 +18,7 @@ class LossTestCase(unittest.TestCase):
         target = np.array([0, 1])
         loss_value, input_grad = loss.calculate(x, target)
 
-        self.assertAlmostEqual(loss_value, 6.47348986820181)
+        self.assertAlmostEqual(loss_value, 6.47348986820181, delta=DELTA)
         self.assertTrue(test_loss_input_grad(loss, x.shape, target))
 
     def test_mean_squared_error_loss(self):
@@ -22,7 +27,7 @@ class LossTestCase(unittest.TestCase):
         target = x + 2
         loss_value, input_grad = loss.calculate(x, target)
 
-        self.assertAlmostEqual(loss_value, 4)
+        self.assertAlmostEqual(loss_value, 4, delta=DELTA)
         self.assertTrue(test_loss_input_grad(loss, x.shape, target))
 
 

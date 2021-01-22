@@ -36,14 +36,24 @@ def test_grad(input_shape, forward, backward, X=None, output_grad=None):
 
 # ------------------------------ Layer functions ------------------------------
 def fully_connected_forward(W, b, X):
-    return np.matmul(X, W) + b
+    return np.matmul(X, W.T) + b
 
 
 def fully_connected_backward(W, b, X, output_grad):
-    dx = np.matmul(output_grad, np.transpose(W))
-    dw = np.matmul(np.transpose(X), output_grad)
-    db = np.sum(output_grad, axis=0)
-    return dx, dw, db
+
+    # n = X.shape[0]
+    # x_grad = np.zeros_like(X)
+    # w_grad = np.zeros_like(W)
+    # b_grad = np.zeros_like(b)
+    # for i in range(n):
+    #     x_grad[i] = np.matmul(W.T, output_grad[i])
+    #     w_grad += np.matmul(np.expand_dims(output_grad[i], axis=1), np.expand_dims(X[i], axis=0))
+    #     b_grad += output_grad[i]
+
+    x_grad = np.matmul(output_grad, W)
+    w_grad = np.matmul(output_grad.T, X)
+    b_grad = np.sum(output_grad, axis=0)
+    return x_grad, w_grad, b_grad
 
 
 def relu_forward(X):
@@ -83,7 +93,7 @@ def bce_backward(x, target):
 # ------------------------------ Test functions ------------------------------
 def test_fully_connected_forward():
     print('------test_fully_connected_forward-------')
-    W = np.array([[2], [3]])
+    W = np.array([[2, 3]])
     b = np.array([1])
     X = np.array([[-1.0, 0.5], [-2.0, 1.0]])
     Y = fully_connected_forward(W, b, X)
@@ -96,7 +106,7 @@ def test_fully_connected_forward():
 def test_fully_connected_backward():
     print('------test_fully_connected_backward------')
     X = np.random.randn(2, 4)
-    W = np.random.randn(4, 10)
+    W = np.random.randn(10, 4)
     b = np.random.randn(10)
     def forward_X(X):
         return fully_connected_forward(W, b, X)
@@ -112,7 +122,7 @@ def test_fully_connected_backward():
         return fully_connected_backward(W, b, X, output_grad)[2]
 
     test_grad((2, 4), forward_X, backward_X)
-    test_grad((4, 10), forward_W, backward_W)
+    test_grad((10, 4), forward_W, backward_W)
     test_grad((10,), forward_b, backward_b)
     print('\tOk')
 
@@ -204,21 +214,21 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
     
     W1 = np.random.normal(loc=0.0,
                           scale=np.sqrt(2 / (counts[0] + counts[1])),
-                          size=(counts[0], counts[1]))
+                          size=(counts[1], counts[0]))
     b1 = np.random.normal(loc=0.0,
                           scale=np.sqrt(2 / counts[1]),
                           size=(counts[1],))
 
     W2 = np.random.normal(loc=0.0,
                           scale=np.sqrt(2 / (counts[1] + counts[2])),
-                          size=(counts[1], counts[2]))
+                          size=(counts[2], counts[1]))
     b2 = np.random.normal(loc=0.0,
                           scale=np.sqrt(2 / counts[2]),
                           size=(counts[2],))
 
     W3 = np.random.normal(loc=0.0,
                           scale=np.sqrt(2 / (counts[2] + counts[3])),
-                          size=(counts[2], counts[3]))
+                          size=(counts[3], counts[2]))
     b3 = np.random.normal(loc=0.0,
                           scale=np.sqrt(2 / counts[3]),
                           size=(counts[3],))
@@ -232,8 +242,6 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         print('epoch={}'.format(epoch + 1))
         
         # Training: Forward pass
-        # import pdb; pdb.set_trace()
-
         x1 = fully_connected_forward(W1, b1, x_train)
         x2 = relu_forward(x1)
         x3 = fully_connected_forward(W2, b2, x2)
@@ -259,7 +267,7 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         b1 -= db1*learning_rate
         b2 -= db2*learning_rate
         b3 -= db3*learning_rate
-
+        
         # Training: Metrics
         losses_train.append(loss)        
         predicted_classes = (y > 0.5).astype(int)
@@ -367,13 +375,12 @@ mode = 'training'
 if mode == 'test':
     test()
 elif mode == 'overfitting':
-    N = 5
-    x_train = np.random.randn(N, 2)
-    target_train = np.random.randint(2, size=(N, 1))
+    x_train = np.array([[0.5, 0.5], [0.75, 0.75], [0.25, 0.25], [0.1, 0.1]])
+    target_train = np.array([[0], [0], [1], [1]], dtype=int)
     train(x_train, target_train)
 elif mode == 'training':
     x_train = np.genfromtxt('train.csv', delimiter=',')[:,slice(0,2)]
     target_train = np.expand_dims(np.genfromtxt('train.csv', delimiter=',')[:,2], axis=1)
     x_val = np.genfromtxt('val.csv', delimiter=',')[:,slice(0,2)]
     target_val = np.expand_dims(np.genfromtxt('val.csv', delimiter=',')[:,2], axis=1)
-    train(x_train, target_train, x_val, target_val, epoch_count=2500, learning_rate=0.0004)
+    train(x_train, target_train, x_val, target_val, epoch_count=20000, learning_rate=0.04)

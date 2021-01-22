@@ -31,12 +31,12 @@ def test_layer_input_grad(layer, input_shape, delta=DELTA):
 
         it.iternext()
 
-    # # For debug
-    # print('---------------------------')
-    # print(layer)
-    # print(analytical_grad)
-    # print(numerical_grad)
-    
+    # For debug
+    print('---------------------------')
+    print(layer)
+    print(analytical_grad)
+    print(numerical_grad)
+
     error = np.mean(np.abs(analytical_grad - numerical_grad))
     print(inspect.stack()[1][3], '- Absolute mean error:', error)
     return error < MAX_GRAD_MEAN_ERROR
@@ -70,6 +70,12 @@ def test_layer_parameter_grad(layer, input_shape, parameter_name, delta=DELTA):
 
         it.iternext()
 
+    # For debug
+    print('---------------------------')
+    print(layer)
+    print(analytical_grad)
+    print(numerical_grad)
+
     error = np.mean(np.abs(analytical_grad - numerical_grad))
     print(inspect.stack()[1][3], '-', parameter_name, '- Absolute mean error:', error)
     return error < MAX_GRAD_MEAN_ERROR
@@ -98,6 +104,12 @@ def test_loss_input_grad(loss, input_shape, target, delta=DELTA):
         numerical_grad[i] = np.sum(y_ - y) / delta
 
         it.iternext()
+
+    # For debug
+    print('---------------------------')
+    print(loss)
+    print(analytical_grad)
+    print(numerical_grad)
 
     error = np.mean(np.abs(analytical_grad - numerical_grad))
     print(inspect.stack()[1][3], '- Absolute mean error:', error)

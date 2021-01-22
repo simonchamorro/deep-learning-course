@@ -6,6 +6,6 @@ from dnn_framework.metrics import LossMetric, ClassificationAccuracyMetric, \
 from dnn_framework.network import Network
 from dnn_framework.optimizer import Optimizer
 from dnn_framework.student.layers import FullyConnectedLayer, BatchNormalization, Sigmoid, ReLU
-from dnn_framework.student.losses import CrossEntropyLoss, Softmax, MeanSquaredErrorLoss
+from dnn_framework.student.losses import CrossEntropyLoss, softmax, MeanSquaredErrorLoss
 from dnn_framework.student.optimizers import SgdOptimizer
 from dnn_framework.trainer import Trainer
