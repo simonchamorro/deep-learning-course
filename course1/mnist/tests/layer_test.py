@@ -51,7 +51,7 @@ class LayerTestCase(unittest.TestCase):
         self.assertTrue(np.all(np.abs(y - expected_y) < DELTA))
 
     def test_batch_normalization_backward(self):
-        # self.assertTrue(test_layer_input_grad(BatchNormalization(4), (2, 4)))
+        self.assertTrue(test_layer_input_grad(BatchNormalization(4), (2, 4)))
         self.assertTrue(test_layer_parameter_grad(BatchNormalization(4), (2, 4), 'gamma'))
         self.assertTrue(test_layer_parameter_grad(BatchNormalization(4), (2, 4), 'beta'))
 
