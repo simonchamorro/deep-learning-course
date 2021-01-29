@@ -15,8 +15,6 @@ class CrossEntropyLoss(Loss):
         :return A tuple containing the loss and the gradient with respect to the input (loss, input_grad)
         """
         m = target.shape[0]
-
-        # Loss
         pred = softmax(x)
 
         # Convert label to one-hot 
@@ -24,13 +22,39 @@ class CrossEntropyLoss(Loss):
         for i in range(len(target)):
             y[i][target[i]] = 1
 
-        # Compute loss
-        loss = - np.sum(y * np.log(pred))
+        # Loss
+
+        # loss = - np.sum(y * np.log(pred))
+
+        # Simplified version
+        # https://deepnotes.io/softmax-crossentropy?fbclid=IwAR1P3EhtYpPfri0cS4qNhWuBTovGYctWmvyx8HofCXjCWuxSF9yNVkAT6wU
+        log_likelihood = -np.log(pred[range(m), target])
+        loss = np.sum(log_likelihood)
+
 
         # Gradient
-        grad = softmax(x)
+
+        # # Calculate cross entropy grad
+        # ce_grad = -y/pred
+        # grad = np.zeros_like(ce_grad)
+
+        # # For each input, calculate d matrix and softmax grad
+        # for n in range(m):
+        #     d_matrix = np.zeros((x.shape[1], x.shape[1]))
+            
+        #     for i in range(x.shape[1]):
+        #         for j in range(x.shape[1]):
+        #             if i == j:
+        #                 d_matrix[i,j] = pred[n,j]*(1-pred[n,j])
+        #             else:
+        #                 d_matrix[i,j] = -pred[n,j]*pred[n,i]
+
+        #     grad[n] = np.matmul(d_matrix, ce_grad[n])
+
+        # Simplified version
+        # https://deepnotes.io/softmax-crossentropy?fbclid=IwAR1P3EhtYpPfri0cS4qNhWuBTovGYctWmvyx8HofCXjCWuxSF9yNVkAT6wU
+        grad = pred    
         grad[range(m), target] -= 1
-        grad = grad
 
         return (loss, grad)
 

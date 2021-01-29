@@ -189,21 +189,28 @@ class BatchNormalization(Layer):
         x, x_hat, mean, var, eps = cache
         gamma = self.params['gamma']
         beta = self.params['beta']
+        m = x.shape[0]
 
         # Gamma
-        g_grad = (output_grad*x_hat).sum(axis=0) #TODO
+        g_grad = (output_grad*x_hat).sum(axis=0)
         
         # Beta
         b_grad = output_grad.sum(axis=0)
 
-        # X (Simplified formula: see 
-        # https://zaffnet.github.io/batch-normalization?fbclid=IwAR3-2dabx7MvD_kGB_oEmDQEtvksqRplDyqCfe0OJ0p1R0SbDFMws8Ndxvc#bprop)
-        m = x.shape[0]
+        # X
+        # # Long version
+        # x_hat_grad = output_grad*gamma
+        # var_grad = np.sum(x_hat_grad*(x-mean)*(-0.5*np.power(var + eps, -3/2)), axis=0)
+        # mean_grad = (-np.sum(x_hat_grad, axis=0)/np.sqrt(var + eps)) + (-2*var_grad/m)*np.sum(x-mean, axis=0)
+        # x_grad = x_hat_grad/np.sqrt(var + eps) + 2*var_grad*(x-mean)/m + mean_grad/m
+
+        # Simplified formula 
+        # https://zaffnet.github.io/batch-normalization?fbclid=IwAR3-2dabx7MvD_kGB_oEmDQEtvksqRplDyqCfe0OJ0p1R0SbDFMws8Ndxvc#bprop
         t = 1./np.sqrt(var + eps)
 
         x_grad = (gamma * t / m) * (m * output_grad - np.sum(output_grad, axis=0)
              - t**2 * (x - mean) * np.sum(output_grad*(x - mean), axis=0))
-        
+
         return x_grad, {'gamma': g_grad, 'beta': b_grad}
 
 
