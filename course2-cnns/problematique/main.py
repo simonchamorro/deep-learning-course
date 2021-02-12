@@ -11,6 +11,11 @@ from dataset import ConveyorSimulator
 from metrics import AccuracyMetric, MeanAveragePrecisionMetric, SegmentationIntersectionOverUnionMetric
 from visualizer import Visualizer
 
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
+
+from models.classification_network import ClassificationNetwork
+from models.segmentation_network import SegmentationNetwork
+
 TRAIN_VALIDATION_SPLIT = 0.9
 CLASS_PROBABILITY_THRESHOLD = 0.5
 INTERSECTION_OVER_UNION_THRESHOLD = 0.5
@@ -43,41 +48,50 @@ class ConveyorCnnTrainer():
         print(self._model)
         print('\nNumber of parameters in the model : ', sum(p.numel() for p in self._model.parameters()))
 
+
     def _create_model(self, task):
         if task == 'classification':
-            # À compléter
-            raise NotImplementedError()
+            return ClassificationNetwork(1, 3)
+
         elif task == 'detection':
             # À compléter
             raise NotImplementedError()
+
         elif task == 'segmentation':
-            # À compléter
-            raise NotImplementedError()
+            return SegmentationNetwork(1, 3)
+
         else:
             raise ValueError('Not supported task')
 
+
     def _create_criterion(self, task):
         if task == 'classification':
-            # À compléter
-            raise NotImplementedError()
+            return BCEWithLogitsLoss()
+
         elif task == 'detection':
             # À compléter
             raise NotImplementedError()
+
         elif task == 'segmentation':
-            # À compléter
-            raise NotImplementedError()
+            return CrossEntropyLoss()
+
         else:
             raise ValueError('Not supported task')
+
 
     def _create_metric(self, task):
         if task == 'classification':
             return AccuracyMetric(CLASS_PROBABILITY_THRESHOLD)
+        
         elif task == 'detection':
             return MeanAveragePrecisionMetric(3, INTERSECTION_OVER_UNION_THRESHOLD)
+        
         elif task == 'segmentation':
             return SegmentationIntersectionOverUnionMetric(SEGMENTATION_BACKGROUND_CLASS)
+        
         else:
             raise ValueError('Not supported task')
+
 
     def test(self):
         params_test = {'batch_size': self._args.batch_size, 'shuffle': False, 'num_workers': 4}
@@ -111,6 +125,7 @@ class ConveyorCnnTrainer():
 
         prediction = self._model(image)
         visualizer.show_prediction(image[0], prediction[0], segmentation_target[0], boxes[0], class_labels[0])
+
 
     def train(self):
         epochs_train_losses = []
@@ -209,6 +224,7 @@ class ConveyorCnnTrainer():
         if ans == 'y':
             self.test()
 
+
     def _train_batch(self, task, model, criterion, metric, optimizer, image, segmentation_target, boxes, class_labels):
         """
         Méthode qui effectue une passe d'entraînement sur un lot de données.
@@ -248,8 +264,30 @@ class ConveyorCnnTrainer():
         :return: La valeur de la fonction de coût pour le lot
         """
 
-        # À compléter
-        raise NotImplementedError()
+        if task == 'classification':
+            pred = model(image)
+            optimizer.zero_grad()
+            loss = criterion(pred, class_labels)
+            loss.backward()
+            optimizer.step()
+            metric.accumulate(pred, class_labels)
+            return loss
+
+        elif task == 'detection':
+            raise NotImplementedError()
+
+        elif task =='segmentation':
+            pred = model(image)
+            optimizer.zero_grad()
+            loss = criterion(pred, segmentation_target)
+            loss.backward()
+            optimizer.step()
+            metric.accumulate(pred, segmentation_target)
+            return loss
+
+        else:
+            raise ValueError('Not supported task')
+
 
     def _test_batch(self, task, model, criterion, metric, image, segmentation_target, boxes, class_labels):
         """
@@ -289,8 +327,24 @@ class ConveyorCnnTrainer():
         :return: La valeur de la fonction de coût pour le lot
         """
 
-        # À compléter
-        raise NotImplementedError()
+        if task == 'classification':
+            pred = model(image)
+            loss = criterion(pred, class_labels)
+            metric.accumulate(pred, class_labels)
+            return loss
+
+        elif task == 'detection':
+            raise NotImplementedError()
+
+        elif task =='segmentation':
+            pred = model(image)
+            loss = criterion(pred, segmentation_target)
+            metric.accumulate(pred, segmentation_target)
+            return loss
+
+        else:
+            raise ValueError('Not supported task')
+
 
 
 if __name__ == '__main__':
