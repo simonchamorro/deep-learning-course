@@ -7,6 +7,8 @@ import numpy as np
 from matplotlib.lines import Line2D
 
 from metrics import segmentation_intersection_over_union
+import matplotlib
+matplotlib.use('Agg')
 
 
 class Visualizer:

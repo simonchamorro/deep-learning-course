@@ -11,10 +11,11 @@ from dataset import ConveyorSimulator
 from metrics import AccuracyMetric, MeanAveragePrecisionMetric, SegmentationIntersectionOverUnionMetric
 from visualizer import Visualizer
 
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
 from models.classification_network import ClassificationNetwork
 from models.segmentation_network import SegmentationNetwork
+from models.detection_network import DetectionNetwork
 
 TRAIN_VALIDATION_SPLIT = 0.9
 CLASS_PROBABILITY_THRESHOLD = 0.5
@@ -54,8 +55,7 @@ class ConveyorCnnTrainer():
             return ClassificationNetwork(1, 3)
 
         elif task == 'detection':
-            # À compléter
-            raise NotImplementedError()
+            return DetectionNetwork(1, 3)
 
         elif task == 'segmentation':
             return SegmentationNetwork(1, 3)
@@ -69,8 +69,7 @@ class ConveyorCnnTrainer():
             return BCEWithLogitsLoss()
 
         elif task == 'detection':
-            # À compléter
-            raise NotImplementedError()
+            return MSELoss()
 
         elif task == 'segmentation':
             return CrossEntropyLoss()
@@ -274,7 +273,13 @@ class ConveyorCnnTrainer():
             return loss
 
         elif task == 'detection':
-            raise NotImplementedError()
+            pred = model(image)
+            optimizer.zero_grad()
+            loss = criterion(pred, boxes)
+            loss.backward()
+            optimizer.step()
+            metric.accumulate(pred, boxes)
+            return loss
 
         elif task =='segmentation':
             pred = model(image)
@@ -334,7 +339,10 @@ class ConveyorCnnTrainer():
             return loss
 
         elif task == 'detection':
-            raise NotImplementedError()
+            pred = model(image)
+            loss = criterion(pred, boxes)
+            metric.accumulate(pred, boxes)
+            return loss
 
         elif task =='segmentation':
             pred = model(image)
