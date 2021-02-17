@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchvision
 
 # Module du dataset
 from voc_classification_dataset import VOCClassificationDataset
@@ -43,7 +44,7 @@ if __name__ == '__main__':
 
     # Affichage
     fig1, axs1 = plt.subplots(1)
-    fig2, axs2 = plt.subplots(3, 2, dpi=300, figsize=(10, 10))
+    fig2, axs2 = plt.subplots(3, 2, dpi=100, figsize=(10, 10))
 
     # Chargement des datasets
     params_train = {'batch_size': batch_size,
@@ -72,7 +73,19 @@ if __name__ == '__main__':
     val_loader = torch.utils.data.DataLoader(dataset_val, **params_val)
 
     # ------------------------ Laboratoire 2 - Question 2 - Début de la section à compléter ----------------------------
-    # Chargement du modèle
+
+    model = torchvision.models.resnet18(pretrained=True, progress=True)
+    
+    for param in model.parameters():
+        param.requires_grad = False
+
+    for param in model.fc.parameters():
+        param.requires_grad = True
+    
+    model = nn.Sequential(model,
+                          nn.ReLU(),
+                          nn.Linear(model.fc.out_features, num_classes),
+                          nn.Sigmoid())
 
     # ------------------------ Laboratoire 2 - Question 2 - Fin de la section à compléter ------------------------------
 
@@ -118,6 +131,9 @@ if __name__ == '__main__':
         m_ap = 0
         thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         # ------------------------ Laboratoire 2 - Question 3 - Début de la section à compléter ----------------
+        true_pos_by_class_by_thresh_idx = [[0 for _ in thresholds] for _ in range(num_classes)]
+        false_pos_by_class_by_thresh_idx = [[0 for _ in thresholds] for _ in range(num_classes)]
+        false_neg_by_class_by_thresh_idx = [[0 for _ in thresholds] for _ in range(num_classes)]
 
         with torch.no_grad():
             for data, target in val_loader:
@@ -126,7 +142,43 @@ if __name__ == '__main__':
                 loss = criterion(output, target)
                 val_loss += loss.item()
 
-            # ------------------------ Laboratoire 2 - Question 3 - Début de la section à compléter ----------------
+                target = target.detach().cpu().numpy()
+                output = output.detach().cpu().numpy()
+
+                for c in range(num_classes):
+                    for thresh_idx in range(len(thresholds)):
+                        pred = (output[:,c] > thresholds[thresh_idx]).astype(int)
+                        target_c = target[:,c]
+                        true_pos_by_class_by_thresh_idx[c][thresh_idx] += \
+                            np.logical_and(pred == 1, target_c == 1).sum()
+                        false_pos_by_class_by_thresh_idx[c][thresh_idx] += \
+                            np.logical_and(pred == 1, target_c == 0).sum()
+                        false_neg_by_class_by_thresh_idx[c][thresh_idx] += \
+                            np.logical_and(pred == 0, target_c == 1).sum()
+
+            for c in range(num_classes):
+                recalls = []
+                precisions = []
+                for thresh_idx in range(len(thresholds)):
+                    true_pos = true_pos_by_class_by_thresh_idx[c][thresh_idx]
+                    false_pos = false_pos_by_class_by_thresh_idx[c][thresh_idx]
+                    false_neg = false_neg_by_class_by_thresh_idx[c][thresh_idx]
+
+                    recall_denom = true_pos + false_neg
+                    recalls.append(true_pos / recall_denom if recall_denom > 0 else 0)
+
+                    precision_denom = true_pos + false_pos
+                    precisions.append(true_pos / precision_denom if precision_denom > 0 else 0)
+
+                sorted_idx = np.argsort(recalls)
+                sorted_precision = np.array(precisions)[sorted_idx]
+                sorted_recall = np.array(recalls)[sorted_idx]
+
+                m_ap += np.trapz(x=sorted_recall, y=sorted_precision)
+
+            m_ap /= num_classes
+
+        # ------------------------ Laboratoire 2 - Question 3 - Début de la section à compléter ----------------
 
         # Historique des coûts de validation
         val_loss /= len(val_loader)
@@ -163,7 +215,8 @@ if __name__ == '__main__':
         axs1.plot(range(1, len(epochs_val_losses) + 1), epochs_val_losses, color='red', label='Validation loss',
                   linestyle='-.')
         axs1.legend()
-        plt.draw()
+        fig1.show()
+        fig2.show()
         plt.pause(0.001)
 
     plt.show()

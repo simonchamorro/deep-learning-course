@@ -48,8 +48,9 @@ class VOCClassificationDataset(VOCDetection):
         multi_hot = torch.zeros(self.nb_classe, dtype=torch.float)
 
         # ------------------------ Laboratoire 2 - Question 1 - Début de la section à compléter ------------------------
-
-
+        objects = target_metadata['annotation']['object']
+        classes = [self.VOC_CLASSES_2_ID[obj['name']] for obj in objects]
+        multi_hot[classes] = 1
         # ------------------------ Laboratoire 2 - Question 1 - Fin de la section à compléter --------------------------
 
 

@@ -84,4 +84,5 @@ if __name__ == '__main__':
         axs[1].set_title(', '.join(labels))
 
         fig.show()
+        plt.pause(0.001)
         ans = input('Press Enter to display the next prediction ...')
