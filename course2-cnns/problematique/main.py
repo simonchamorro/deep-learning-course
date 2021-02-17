@@ -69,7 +69,7 @@ class ConveyorCnnTrainer():
             return BCEWithLogitsLoss()
 
         elif task == 'detection':
-            return MSELoss()
+            return (MSELoss(), CrossEntropyLoss(), BCEWithLogitsLoss()) 
 
         elif task == 'segmentation':
             return CrossEntropyLoss()
@@ -123,7 +123,8 @@ class ConveyorCnnTrainer():
             test_loss, test_metric.get_name(), test_metric.get_value()))
 
         prediction = self._model(image)
-        visualizer.show_prediction(image[0], prediction[0], segmentation_target[0], boxes[0], class_labels[0])
+        i = 1
+        visualizer.show_prediction(image[i], prediction[i], segmentation_target[i], boxes[i], class_labels[i])
 
 
     def train(self):
@@ -275,7 +276,11 @@ class ConveyorCnnTrainer():
         elif task == 'detection':
             pred = model(image)
             optimizer.zero_grad()
-            loss = criterion(pred, boxes)
+            boxes = self.sort_boxes(boxes)
+            loss_mse = criterion[0](pred[:,:,1:4], boxes[:,:,1:4])
+            loss_class = criterion[1](pred[:,:,4:], boxes[:,:,4].long())
+            loss_binary = criterion[2](pred[:,:,0], boxes[:,:,0])
+            loss = loss_mse + loss_class + loss_binary
             loss.backward()
             optimizer.step()
             metric.accumulate(pred, boxes)
@@ -340,7 +345,11 @@ class ConveyorCnnTrainer():
 
         elif task == 'detection':
             pred = model(image)
-            loss = criterion(pred, boxes)
+            boxes = self.sort_boxes(boxes)
+            loss_mse = criterion[0](pred[:,:,1:4], boxes[:,:,1:4])
+            loss_class = criterion[1](pred[:,:,4:], boxes[:,:,4].long())
+            loss_binary = criterion[2](pred[:,:,0], boxes[:,:,0])
+            loss = loss_mse + loss_class + loss_binary
             metric.accumulate(pred, boxes)
             return loss
 
@@ -352,6 +361,28 @@ class ConveyorCnnTrainer():
 
         else:
             raise ValueError('Not supported task')
+
+
+    def sort_boxes(self, boxes):
+        for i in range(boxes.shape[0]):
+            new_box = torch.zeros_like(boxes[i])
+            for j in range(boxes.shape[1]):
+                box = boxes[i][j]
+                if box[0] == 1:
+                    new_box[int(box[4])] = box
+            boxes[i] = new_box
+        return boxes
+
+
+    def onehot_boxes(self, boxes):
+        zeros = torch.zeros((3))
+        new_boxes = torch.zeros((boxes.shape[0], boxes.shape[1], 7))
+        for i in range(boxes.shape[0]):
+            for j in range(boxes.shape[1]):
+                box = boxes[i][j]
+                new_boxes[i][j] = torch.cat((box[:4], zeros))
+                new_boxes[i][j][int(box[4]) + 4] = 1
+        return new_boxes
 
 
 
