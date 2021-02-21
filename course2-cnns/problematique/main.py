@@ -124,6 +124,7 @@ class ConveyorCnnTrainer():
 
         prediction = self._model(image)
         i = 1
+        import pdb; pdb.set_trace()
         visualizer.show_prediction(image[i], prediction[i], segmentation_target[i], boxes[i], class_labels[i])
 
 
