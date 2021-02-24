@@ -375,17 +375,6 @@ class ConveyorCnnTrainer():
         return boxes
 
 
-    def onehot_boxes(self, boxes):
-        zeros = torch.zeros((3))
-        new_boxes = torch.zeros((boxes.shape[0], boxes.shape[1], 7))
-        for i in range(boxes.shape[0]):
-            for j in range(boxes.shape[1]):
-                box = boxes[i][j]
-                new_boxes[i][j] = torch.cat((box[:4], zeros))
-                new_boxes[i][j][int(box[4]) + 4] = 1
-        return new_boxes
-
-
 
 if __name__ == '__main__':
     #  Settings

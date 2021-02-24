@@ -41,6 +41,7 @@ class DetectionNetwork(nn.Module):
         x = self.fc2(x)
         x = self.relu(x)
         x = self.fc3(x)
-        x = self.sigmoid(x)
-        output = x.view(x.shape[0], 3, 7)
+        x = x.view(x.shape[0], 3, 7)
+        x1 = self.sigmoid(x[:,:,:4])
+        output = torch.cat((x1, x[:,:,4:]), dim=2)
         return output
