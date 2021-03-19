@@ -24,6 +24,8 @@ if __name__ == '__main__':
     train_val_split = .7
     batch_size = 10 
     lr = 0.01
+    n_hidden = 25
+    n_layers = 1
     # ---------------- Fin Paramètres et hyperparamètres ----------------#
 
     # Initialisation des variables
@@ -35,7 +37,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() and not force_cpu else "cpu")
 
     # Instanciation de l'ensemble de données
-    dataset = HandwrittenWords()
+    dataset = HandwrittenWords('data_trainval.p')
 
     # Séparation du dataset (entraînement et validation)
     n_train_samp = int(len(dataset)*train_val_split)
@@ -52,23 +54,45 @@ if __name__ == '__main__':
     print('\n')
 
     # Instanciation du model
-    model = Model(n_hidden,  n_layers=n_layers)
+    model = trajectory2seq(n_hidden, n_layers, dataset.int2symb, \
+                           dataset.symb2int, dataset.dict_size, \
+                           device, 5)
     model = model.to(device)
 
     # Afficher le résumé du model
     print('Model : \n', model, '\n')
     
     # Initialisation des variables
-    best_val_loss = np.inf # pour sauvegarder le meilleur model
+    best_val_loss = np.inf
 
     if trainning:
 
         # Fonction de coût et optimizateur
-        # À compléter
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
         for epoch in range(1, n_epochs + 1):
             # Entraînement
-            # À compléter
+            running_loss_train = 0
+            model.train()
+            for batch_idx, data in enumerate(dataload_train):
+                import pdb; pdb.set_trace()
+                in_seq, target_seq = [obj.to(device).float() for obj in data]
+
+
+
+                optimizer.zero_grad()
+                pred = model(in_seq)
+                loss = criterion(out, target_seq)
+                loss.backward()
+                optimizer.step()
+                running_loss_train += loss.item()
+            
+                # Affichage pendant l'entraînement
+                if batch_idx % 10 == 0:
+                    print('Train - Epoch: {}/{} [{}/{} ({:.0f}%)] Average Loss: {:.6f}'.format(
+                        epoch, n_epochs, batch_idx * len(data), len(dataload_train.dataset),
+                                        100. * batch_idx / len(dataload_train), running_loss_train / (batch_idx + 1)), end='\r')
             
             # Validation
             # À compléter

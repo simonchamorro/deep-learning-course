@@ -21,7 +21,10 @@ class trajectory2seq(nn.Module):
 
         # Definition des couches
         # Couches pour rnn
-        # À compléter
+        self.encoder = nn.GRU(input_size=2, num_layers=n_layers, \
+                           hidden_size=hidden_dim, batch_first=True)
+        self.decoder = nn.GRU(input_size=hidden_dim, num_layers=n_layers, \
+                           hidden_size=hidden_dim, batch_first=True)
 
         # Couches pour attention
         # À compléter
@@ -30,7 +33,7 @@ class trajectory2seq(nn.Module):
         # À compléter
 
     def forward(self, x):
-        # À compléter
+        import pdb; pdb.set_trace()
         return None
     
 

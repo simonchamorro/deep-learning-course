@@ -49,17 +49,21 @@ class HandwrittenWords(Dataset):
                          'y': 27,
                          'z': 28}
 
-        self.int2sym = {}
+        self.int2symb = {}
         for k, v in self.symb2int.items():
-            self.int2sym[v] = k
+            self.int2symb[v] = k
 
-        self.dict_size = len(self.int2sym.keys())
+        self.dict_size = len(self.int2symb.keys())
+        self.max_len = 0
+        for i in range(len(self.data)):
+            if len(self.data[i][1][0]) > self.max_len:
+                self.max_len = len(self.data[i][1][0])
 
         # Extraction des symboles
         self.labels = [[l for l in data[0]] for data in self.data]
         self.one_hot_label = []
 
-        # Ajout du padding aux séquences
+        # Ajout du padding aux labels
         for label in self.labels:
             label.insert(0, start_symbol)
             label.append(stop_symbol)
@@ -71,7 +75,7 @@ class HandwrittenWords(Dataset):
 
     def __getitem__(self, idx):
         return torch.tensor(self.data[idx][1], dtype=torch.float32), \
-               torch.tensor(self.one_hot_label[idx]).long(), 
+               torch.tensor(self.one_hot_label[idx]).long()
 
     def visualisation(self, idx):
         # Get item
