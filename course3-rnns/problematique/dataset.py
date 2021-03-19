@@ -19,35 +19,41 @@ class HandwrittenWords(Dataset):
             self.data = pickle.load(fp)
 
         # Create dictionnary to encode letters
-        letter2hot = {'<pad>': 0,
-                      '<sos>': 1,
-                      '<eos>': 2,
-                      'a': 3,
-                      'b': 4,
-                      'c': 5,
-                      'd': 6,
-                      'e': 7,
-                      'f': 8,
-                      'g': 9,
-                      'h': 10,
-                      'i': 11,
-                      'j': 12,
-                      'k': 13,
-                      'l': 14,
-                      'm': 15,
-                      'n': 16,
-                      'o': 17,
-                      'p': 18,
-                      'q': 19,
-                      'r': 20,
-                      's': 21,
-                      't': 22,
-                      'u': 23,
-                      'v': 24,
-                      'w': 25,
-                      'x': 26,
-                      'y': 27,
-                      'z': 28}
+        self.symb2int = {'<pad>': 0,
+                         '<sos>': 1,
+                         '<eos>': 2,
+                         'a': 3,
+                         'b': 4,
+                         'c': 5,
+                         'd': 6,
+                         'e': 7,
+                         'f': 8,
+                         'g': 9,
+                         'h': 10,
+                         'i': 11,
+                         'j': 12,
+                         'k': 13,
+                         'l': 14,
+                         'm': 15,
+                         'n': 16,
+                         'o': 17,
+                         'p': 18,
+                         'q': 19,
+                         'r': 20,
+                         's': 21,
+                         't': 22,
+                         'u': 23,
+                         'v': 24,
+                         'w': 25,
+                         'x': 26,
+                         'y': 27,
+                         'z': 28}
+
+        self.int2sym = {}
+        for k, v in self.symb2int.items():
+            self.int2sym[v] = k
+
+        self.dict_size = len(self.int2sym.keys())
 
         # Extraction des symboles
         self.labels = [[l for l in data[0]] for data in self.data]
@@ -58,17 +64,18 @@ class HandwrittenWords(Dataset):
             label.insert(0, start_symbol)
             label.append(stop_symbol)
             label.extend([pad_symbol]*(7-len(label)))
-            self.one_hot_label.append([letter2hot[l] for l in label])
+            self.one_hot_label.append([self.symb2int[l] for l in label])
         
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        return self.one_hot_label[idx], self.data[idx][1]
+        return torch.tensor(self.data[idx][1], dtype=torch.float32), \
+               torch.tensor(self.one_hot_label[idx]).long(), 
 
     def visualisation(self, idx):
         # Get item
-        label, sample = self[idx]
+        sample, label = self[idx]
 
         # Visualisation des échantillons
         fig = plt.figure()
