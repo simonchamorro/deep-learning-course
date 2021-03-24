@@ -19,9 +19,9 @@ class HandwrittenWords(Dataset):
             self.data = pickle.load(fp)
 
         # Create dictionnary to encode letters
-        self.symb2int = {'<pad>': 0,
-                         '<sos>': 1,
-                         '<eos>': 2,
+        self.symb2int = {'<sos>': 0,
+                         '<eos>': 1,
+                         '<pad>': 2,
                          'a': 3,
                          'b': 4,
                          'c': 5,
@@ -65,16 +65,31 @@ class HandwrittenWords(Dataset):
 
         # Ajout du padding aux labels
         for label in self.labels:
-            label.insert(0, start_symbol)
             label.append(stop_symbol)
-            label.extend([pad_symbol]*(7-len(label)))
+            label.extend([pad_symbol]*(6-len(label)))
             self.one_hot_label.append([self.symb2int[l] for l in label])
         
+        # Ajout du padding aux données
+        self.input_len = max([d[1].shape[1] for d in self.data])
+        x_len = np.mean([d[1][0][-1]/len(d[1][0]) for d in self.data])
+        for data in self.data:
+            last_x_val = data[1][0,-1]
+            last_y_val = data[1][1,-1]
+            pad = np.full((data[1].shape[0], self.input_len-data[1].shape[1]), np.expand_dims(data[1][:,-1], axis=1))
+            # Pad as line 
+            # for i in range(len(pad[0])):
+            #     pad[0][i] = last_x_val + i*x_len
+            data[1] = np.concatenate((data[1], pad), axis=1)
+
+
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        return torch.tensor(self.data[idx][1], dtype=torch.float32), \
+        coords = self.data[idx][1].T.copy()
+        coords[:,0] *= 1.0/coords[:,0].max()
+        coords[:,1] *= 1.0/coords[:,1].max()
+        return torch.tensor(coords, dtype=torch.float32), \
                torch.tensor(self.one_hot_label[idx]).long()
 
     def visualisation(self, idx):
@@ -83,7 +98,7 @@ class HandwrittenWords(Dataset):
 
         # Visualisation des échantillons
         fig = plt.figure()
-        plt.plot(sample[0], sample[1])
+        plt.plot(sample[:,0], sample[:,1])
         plt.axis('equal')
         plt.legend([self.data[idx][0]])
         plt.title('Sample ' + str(idx), fontsize=10)

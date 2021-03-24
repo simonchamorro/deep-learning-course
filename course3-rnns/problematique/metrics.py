@@ -25,7 +25,14 @@ def edit_distance(x, y):
 
 def confusion_matrix(true, pred, ignore=[]):
     # Calcul de la matrice de confusion
+    confusion_m = np.zeros((29, 29))
+    symb_count = np.zeros((29, 29))
 
-    # À compléter
+    for i in range(len(true)):
+        for j in range(len(true[0])):
+            confusion_m[true[i][j], pred[i][j]] += 1
+            symb_count[true[i][j], :] += 1
 
-    return None
+    confusion_m /= symb_count
+
+    return confusion_m[3:,3:]
