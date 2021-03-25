@@ -55,8 +55,8 @@ if __name__ == '__main__':
 
     # ---------------- Paramètres et hyperparamètres ----------------#
     force_cpu = False          # Forcer a utiliser le cpu?
-    trainning = True           # Entrainement?
-    test = False                # Test?
+    trainning = False           # Entrainement?
+    test = True                # Test?
     learning_curves = True     # Affichage des courbes d'entrainement?
     gen_test_images = True     # Génération images test?
     seed = 1                   # Pour répétabilité
@@ -219,11 +219,12 @@ if __name__ == '__main__':
 
     if test:
         # Test
-        batch_size = 500
-        dataset = HandwrittenWords('data_trainval.p')
+        batch_size = 250
+        dataset = HandwrittenWords('data_test.p')
         dataload = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=n_workers)
         model = torch.load('model.pt')
         model.eval()
+        model.max_len = {'input': dataset.input_len, 'output': 6}
 
         dist = 0
         running_loss = 0
