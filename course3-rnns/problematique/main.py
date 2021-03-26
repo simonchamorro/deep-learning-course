@@ -61,7 +61,7 @@ if __name__ == '__main__':
     gen_test_images = True     # Génération images test?
     seed = 1                   # Pour répétabilité
     n_workers = 0              # Nombre de threads pour chargement des données (mettre à 0 sur Windows)
-    n_epochs = 30
+    n_epochs = 60
     train_val_split = .7
     batch_size = 32
     lr = 0.01

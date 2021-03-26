@@ -27,12 +27,11 @@ class trajectory2seq(nn.Module):
         self.decoder = nn.GRU(input_size=hidden_dim, num_layers=n_layers, \
                            hidden_size=hidden_dim, batch_first=True)
 
-        # Couches pour attention
-        self.att_combine = nn.Linear(2*hidden_dim, hidden_dim)
+        # Couches pour attention et sortie
+        self.att_combine = nn.Linear(2*hidden_dim, self.dict_size)
         self.hidden2query = nn.Linear(hidden_dim, hidden_dim)
 
         # Couche dense pour la sortie
-        self.fc = nn.Linear(hidden_dim, self.dict_size)
         self.to(device)
 
     def forward(self, x):
@@ -54,7 +53,7 @@ class trajectory2seq(nn.Module):
             attn_out, attn_w = self.attention(out, out_enc)
             out = torch.cat((out, attn_out.unsqueeze(1)), dim=1)
             out = self.att_combine(out.view(out.shape[0], -1))[:,None,:]
-            vec_out[:,i:i+1,:] = self.fc(out)
+            vec_out[:,i:i+1,:] = out
             vec_in = torch.argmax(out, dim=2)
             attn_ws[:,:,i] = attn_w.squeeze(-1)
 
